@@ -1,0 +1,105 @@
+version: 2.1
+
+jobs:
+  scan:
+    docker:
+      - image: cimg/node:20.12
+    steps:
+      - checkout
+
+      - run:
+          name: Install Java 17
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y openjdk-17-jre-headless
+            java -version
+
+      - run:
+          name: Install dependencies
+          command: |
+            npm ci || true
+            npm --prefix backend ci
+            npm --prefix frontend ci || true
+
+      - run:
+          name: Install SonarScanner CLI (user space)
+          command: |
+            SCANNER_VERSION=5.0.1.3006
+            curl -sSLo /tmp/sonar.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SCANNER_VERSION}-linux.zip
+            unzip -q /tmp/sonar.zip -d $HOME
+            mv $HOME/sonar-scanner-* $HOME/sonar-scanner
+            echo 'export PATH="$HOME/sonar-scanner/bin:$PATH"' >> $BASH_ENV
+            echo 'export SONAR_SCANNER_OPTS="-Xmx1024m"' >> $BASH_ENV
+            source $BASH_ENV
+            sonar-scanner -v
+
+      - run:
+          name: Check Sonar env (no secrets)
+          command: echo "SONAR_HOST_URL=${SONAR_HOST_URL:-https://sonarcloud.io}"
+
+      - run:
+          name: SonarCloud scan (debug, shorter)
+          no_output_timeout: 20m
+          command: |
+            source $BASH_ENV
+            sonar-scanner \
+              -Dsonar.host.url=${SONAR_HOST_URL:-https://sonarcloud.io} \
+              -Dsonar.login=${SONAR_TOKEN} \
+              -Dsonar.projectKey=${SONAR_PROJECT_KEY:-herkeens_test} \
+              -Dsonar.organization=${SONAR_ORG:-herkeens} \
+              -Dsonar.scm.disabled=true \
+              -Dsonar.cpd.exclusions=**/*.min.js,**/*.bundle.js \
+              -X
+
+  deps-audit:
+    docker:
+      - image: cimg/node:20.12
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            npm --prefix backend ci
+            npm --prefix frontend ci || true
+      - run:
+          name: Audit Dependencies (SCA)
+          command: |
+            mkdir -p reports
+            npm --prefix backend audit --audit-level=high --json > reports/backend-audit.json || true
+            npm --prefix frontend audit --audit-level=high --json > reports/frontend-audit.json || true
+      - store_artifacts:
+          path: reports
+
+  zap-baseline:
+    docker:
+      - image: ghcr.io/zaproxy/zaproxy:stable
+    steps:
+      - checkout
+      - run:
+          name: ZAP Baseline Scan (DAST via GHCR)
+          command: |
+            mkdir -p zap
+            # Point at your HTTPS API endpoint or staging URL
+            zap-baseline.py \
+              -t https://localhost:8443 \
+              -r zap/zap-report.html \
+              -d || true
+      - store_artifacts:
+          path: zap
+
+workflows:
+  security-pipeline:
+    jobs:
+      # SAST on all branches
+      - scan:
+          context: SonarCloud
+
+      # SCA/DAST only on main (saves free-tier minutes)
+      - deps-audit:
+          filters:
+            branches:
+              only: main
+      - zap-baseline:
+          filters:
+            branches:
+              only: main

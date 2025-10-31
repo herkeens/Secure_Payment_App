@@ -1,0 +1,140 @@
+.staff-container { max-width: 1100px; margin: 24px auto 56px; padding: 0 16px; }
+
+.staff-toolbar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; margin-bottom: 16px;
+}
+
+.staff-title { font-size: 22px; font-weight: 700; letter-spacing: .2px; }
+
+.staff-table .thead,
+.staff-table .row {
+  display: grid;
+  grid-template-columns: 1.2fr 1.4fr 1.2fr .8fr .8fr 1fr 1fr;
+  gap: 10px; align-items: center;
+}
+
+.staff-table .thead {
+  font-weight: 600; opacity: .9;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  padding: 10px 0;
+}
+
+.staff-table .row {
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+
+.staff-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.staff-card {
+  background: var(--card, #0f1420);
+  border: 1px solid var(--line, rgba(255,255,255,.08));
+  border-radius: 12px; padding: 16px;
+  box-shadow: 0 1px 2px rgba(2, 6, 23, 0.45);
+}
+
+.staff-login-card { max-width: 460px; margin: 48px auto; }
+
+.staff-muted { color: var(--muted, #9fb0c7); font-size: 12px; }
+
+/* Safe button fallbacks if your global .btn classes aren’t present */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 8px 12px; border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.14);
+  cursor: pointer; background: #121a2b; color: #e6edf5;
+}
+.btn.primary { background: #2a4cff; border-color: #2a4cff; color: #fff; }
+.btn.ghost { background: transparent; }
+.btn:disabled { opacity: .6; cursor: not-allowed; }
+
+.banner.danger {
+  background: rgba(255, 64, 64, .12);
+  border: 1px solid rgba(255, 64, 64, .35);
+  color: #ff8080; border-radius: 10px; padding: 8px 12px;
+}
+
+.form label { display: block; margin: 0 0 12px; }
+.form input {
+  width: 100%; padding: 10px 12px; border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: #0f1420; color: #e6edf5;
+}
+/* Generic hover for all .btn */
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 12px rgba(0,0,0,.25);
+  }
+  
+  /* Softer hover for ghost buttons like Refresh */
+  .btn.ghost:hover {
+    background: rgba(255,255,255,.06);
+    border-color: rgba(255,255,255,.28);
+  }
+  
+  /* If you want a specific style just for Logout */
+  .btn.logout {
+    background: transparent;
+  }
+  .btn.logout:hover {
+    background: rgba(255,255,255,.06);
+    border-color: rgba(255,255,255,.35);
+  }
+  .input-with-toggle { position: relative; }
+.input-with-toggle input { padding-right: 84px; }
+.input-with-toggle .reveal-btn {
+  position: absolute; right: 0; top: 0; height: 100%;
+  padding: 0 12px; border-top-left-radius: 0; border-bottom-left-radius: 0;
+}
+/* Make room for the button and remove the right curve on the input */
+.input-with-toggle input {
+    padding-right: 90px;                 /* a bit more room for text */
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+  
+  /* Style the toggle to look like part of the field */
+  .input-with-toggle .reveal-btn {
+    position: absolute;
+    right: 0; top: 0;
+    height: 100%;
+    min-width: 84px;                      /* consistent size */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+  
+    background: #0f1420;                  /* match your .form input bg */
+    color: var(--muted, #9fb0c7);
+    border: 0;
+    border-left: 1px solid rgba(255,255,255,.14);
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-top-right-radius: 10px;        /* same radius as inputs */
+    border-bottom-right-radius: 10px;
+    cursor: pointer;
+  }
+  
+  /* Hover + focus to feel interactive */
+  .input-with-toggle .reveal-btn:hover {
+    background: rgba(255,255,255,.06);
+    color: #e6edf5;
+  }
+  .input-with-toggle .reveal-btn:focus-visible {
+    outline: 2px solid #2a4cff;           /* matches your primary */
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(42,76,255,.25);
+  }
+  .staff-login-card input:-webkit-autofill,
+.staff-login-card input:-webkit-autofill:hover,
+.staff-login-card input:-webkit-autofill:focus,
+.staff-login-card input:-webkit-autofill:active {
+  -webkit-text-fill-color: var(--text, #e5e7eb);
+  caret-color: var(--text, #e5e7eb);
+  transition: background-color 9999s ease-out 0s; /* prevent flash */
+  -webkit-box-shadow: 0 0 0px 1000px #0a1020 inset !important;
+  box-shadow: 0 0 0px 1000px #0a1020 inset !important;
+  border: 1px solid var(--border, rgba(255,255,255,.14)) !important;
+}
