@@ -15,7 +15,7 @@ jobs:
             sudo apt-get install -y openjdk-17-jre-headless
             java -version
 
-      # Install deps 
+      # Install deps
       - run:
           name: Install dependencies
           command: |
@@ -23,7 +23,7 @@ jobs:
             npm --prefix backend ci
             npm --prefix frontend ci || true
 
-      # SonarScanner CLI 
+      # SonarScanner CLI
       - run:
           name: Install SonarScanner CLI
           command: |
@@ -32,15 +32,22 @@ jobs:
             unzip -q /tmp/sonar.zip -d $HOME
             mv $HOME/sonar-scanner-* $HOME/sonar-scanner
             echo 'export PATH="$HOME/sonar-scanner/bin:$PATH"' >> $BASH_ENV
-            echo 'export SONAR_SCANNER_OPTS="-Xmx1024m -Djavax.net.ssl.trustStoreType=pkcs12"' >> $BASH_ENV
+            # Bump heap and keep PKCS12 to avoid SSL weirdness
+            echo 'export SONAR_SCANNER_OPTS="-Xmx2048m -Djavax.net.ssl.trustStoreType=pkcs12"' >> $BASH_ENV
             source $BASH_ENV
             sonar-scanner -v
 
+      # Sonar scan (frontend + backend) with keepalive + extra Node space
       - run:
-          name: SonarCloud scan (frontend + backend)
-          no_output_timeout: 25m
+          name: SonarCloud scan (frontend + backend, keepalive)
+          no_output_timeout: 45m
           command: |
             source $BASH_ENV
+
+            # keep CircleCI output alive while sonar-scanner is quiet
+            ( while true; do echo "[keepalive] Sonar scan still running: $(date -u)"; sleep 60; done ) &
+            KEEPALIVE_PID=$!
+
             sonar-scanner \
               -Dsonar.host.url=${SONAR_HOST_URL:-https://sonarcloud.io} \
               -Dsonar.token=${SONAR_TOKEN} \
@@ -48,8 +55,10 @@ jobs:
               -Dsonar.organization=${SONAR_ORG:-herkeens} \
               -Dsonar.scm.disabled=true \
               -Dsonar.cpd.exclusions=**/*.min.js,**/*.bundle.js \
-              -Dsonar.scanner.skipSystemTruststore=true
+              -Dsonar.scanner.skipSystemTruststore=true \
+              -Dsonar.javascript.node.maxspace=3072
 
+            kill $KEEPALIVE_PID
 
   deps-audit:
     docker:
@@ -79,7 +88,7 @@ jobs:
           name: ZAP Baseline Scan (DAST)
           command: |
             mkdir -p zap
-            # Update target if your API is reachable elsewhere from CI (staging URL works best)
+            # Point to a reachable HTTPS API (staging URL works best)
             zap-baseline.py \
               -t https://localhost:8443 \
               -r zap/zap-report.html \
