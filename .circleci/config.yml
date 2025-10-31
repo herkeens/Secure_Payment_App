@@ -7,6 +7,7 @@ jobs:
     steps:
       - checkout
 
+      # Java for the Sonar scanner
       - run:
           name: Install Java 17
           command: |
@@ -14,6 +15,7 @@ jobs:
             sudo apt-get install -y openjdk-17-jre-headless
             java -version
 
+      # Install deps 
       - run:
           name: Install dependencies
           command: |
@@ -21,30 +23,27 @@ jobs:
             npm --prefix backend ci
             npm --prefix frontend ci || true
 
+      # SonarScanner CLI 
       - run:
-          name: Install SonarScanner CLI (user space)
+          name: Install SonarScanner CLI
           command: |
             SCANNER_VERSION=5.0.1.3006
             curl -sSLo /tmp/sonar.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SCANNER_VERSION}-linux.zip
             unzip -q /tmp/sonar.zip -d $HOME
             mv $HOME/sonar-scanner-* $HOME/sonar-scanner
             echo 'export PATH="$HOME/sonar-scanner/bin:$PATH"' >> $BASH_ENV
-            echo 'export SONAR_SCANNER_OPTS="-Xmx1024m"' >> $BASH_ENV
+            echo 'export SONAR_SCANNER_OPTS="-Xmx1024m -Djavax.net.ssl.trustStoreType=pkcs12"' >> $BASH_ENV
             source $BASH_ENV
             sonar-scanner -v
 
       - run:
-          name: Check Sonar env (no secrets)
-          command: echo "SONAR_HOST_URL=${SONAR_HOST_URL:-https://sonarcloud.io}"
-
-      - run:
-          name: SonarCloud scan (debug, shorter)
-          no_output_timeout: 20m
+          name: SonarCloud scan (frontend + backend)
+          no_output_timeout: 25m
           command: |
             source $BASH_ENV
             sonar-scanner \
               -Dsonar.host.url=${SONAR_HOST_URL:-https://sonarcloud.io} \
-              -Dsonar.login=${SONAR_TOKEN} \
+              -Dsonar.token=${SONAR_TOKEN} \
               -Dsonar.projectKey=${SONAR_PROJECT_KEY:-herkeens_test} \
               -Dsonar.organization=${SONAR_ORG:-herkeens} \
               -Dsonar.scm.disabled=true \
@@ -76,10 +75,10 @@ jobs:
     steps:
       - checkout
       - run:
-          name: ZAP Baseline Scan (DAST via GHCR)
+          name: ZAP Baseline Scan (DAST)
           command: |
             mkdir -p zap
-            # Point at your HTTPS API endpoint or staging URL
+            # Update target if your API is reachable elsewhere from CI (staging URL works best)
             zap-baseline.py \
               -t https://localhost:8443 \
               -r zap/zap-report.html \
@@ -90,11 +89,9 @@ jobs:
 workflows:
   security-pipeline:
     jobs:
-      # SAST on all branches
       - scan:
           context: SonarCloud
-
-      # SCA/DAST only on main (saves free-tier minutes)
+      # keep SCA/DAST on main to save minutes
       - deps-audit:
           filters:
             branches:
