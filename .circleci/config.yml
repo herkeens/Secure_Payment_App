@@ -56,7 +56,7 @@ jobs:
               -Dsonar.scm.disabled=true \
               -Dsonar.cpd.exclusions=**/*.min.js,**/*.bundle.js \
               -Dsonar.scanner.skipSystemTruststore=true \
-              -Dsonar.javascript.node.maxspace=3072
+              -Dsonar.javascript.node.maxspace=4096
 
             kill $KEEPALIVE_PID
 
