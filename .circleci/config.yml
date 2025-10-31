@@ -48,7 +48,8 @@ jobs:
               -Dsonar.organization=${SONAR_ORG:-herkeens} \
               -Dsonar.scm.disabled=true \
               -Dsonar.cpd.exclusions=**/*.min.js,**/*.bundle.js \
-              -X
+              -Dsonar.scanner.skipSystemTruststore=true
+
 
   deps-audit:
     docker:
